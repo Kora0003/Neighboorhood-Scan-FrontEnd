@@ -4,6 +4,8 @@
       url: 'https://bennotkin.quarto.pub/city-scan-html-sample'
     - id: 6f98c8bf-4767-4002-8bc3-10ac6e9b03f9
       url: 'https://bennotkin.quarto.pub/goris'
+    - id: f52366cb-01ad-42bd-9ee1-b36580cf9887
+      url: 'https://kora0003.quarto.pub/namangan-center-neighborhood-scan'
 - source: inputs-form.qmd
   quarto-pub:
     - id: aa8dfc11-858e-467e-961f-6af27d85487a

@@ -1,11 +1,14 @@
 ---
 format:
   html:
-    theme: [source/custom.scss, none]
-#editor: source
+    theme:
+    - source/custom.scss
+    - none
 execute:
   echo: false
-#  output: false
+  output: true
+resource_files:
+- index.html
 ---
 
 ::: setup
@@ -40,7 +43,7 @@ layer_params <- read_yaml('source/layers.yml')
 ```{r}
 #| include: false
 # Visualization parameters (Am I using all of them?)
-# Interactivve Plots (Leaflet)
+# Interactive Plots (Leaflet)
 basemap_opacity <- 0.3
 legend_opacity <- 0.8
 vwidth <- 900
@@ -53,17 +56,18 @@ map_height <- 5.9
 aspect_ratio <- map_width / map_height
 
 # this is to enable fractional zoom in mapshot
-useragent <- 'Mozilla/5.0 (compatible; MSIE 10.6; Windows NT 6.1; Trident/5.0; InfoPath.2; SLCC1; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729; .NET CLR 2.0.50727) 3gpp-gba UNTRUSTED/1.0'
+#useragent <- 'Mozilla/5.0 (compatible; MSIE 10.6; Windows NT 6.1; Trident/5.0; InfoPath.2; SLCC1; .NET #CLR 3.0.4506.2152; .NET CLR 3.5.30729; .NET CLR 2.0.50727) 3gpp-gba UNTRUSTED/1.0'
 ```
 
 ---
-title: "`r paste(city, country, sep = ', ')` Neighborhood Scan"
+title: "`r paste(city, country, sep = ' ')` Neighborhood Scan"
 ---
 
 ```{r}
 # Get text#
+
 city_text <- read_md(file.path(user_input_dir, "text-files/manual-text.md"))
-generic_text <- read_yaml("source/generic-text.yml")
+generic_text <- read_yaml("source/generic-text_old.yml")
 slide_texts <- merge_lists(city_text, generic_text)
 ```
 
@@ -100,10 +104,12 @@ sections <- readLines("index.qmd") %>%
 anchors <- sections %>% str_extract("^\\s*- (.*$)", group = T) %>% tolower() %>% str_replace_all(c("[^a-z\\s]" = "", "\\s+" = "-")) %>%
   str_replace("(.*)", "(#\\1)")
 
-paste0(str_replace(sections, "(^\\s*- )(.+$)", "\\1[\\2]"), anchors) %>% { cat("- <span id='dynamic-header'>City Scan</span>  &or;", ., sep = "\n") }
+# paste0(str_replace(sections, "(^\\s*- )(.+$)", "\\1[\\2]"), anchors) %>% { cat("- <span id='dynamic-header'>Neighborhood Scan</span>  &or;", ., sep = "\n") }
+
+paste0(str_replace(sections, "(^\\s*- )(.+$)", "\\1[\\2]"), anchors) %>% { cat("- <span id='dynamic-header'>Neighborhood Scan</span>  &or;", ., sep = "\n") }
 ```
 
-[Inputs version](https://bennotkin.quarto.pub/gagarin-city-scan-form/)
+[Inputs version]
 :::
 :::
 
@@ -111,6 +117,7 @@ paste0(str_replace(sections, "(^\\s*- )(.+$)", "\\1[\\2]"), anchors) %>% { cat("
 # {{< meta title >}}
 
 ## Executive Summary
+
 ```{r}
 #| output: asis
 print_slide_text(slide_texts$executive_summary$executive_summary)
@@ -130,11 +137,11 @@ print_slide_text(slide_texts$setting_the_context$basic_city_info)
 ```
 
 ### The State of Urban Infrastructure and Service Delivery
+
 ```{r}
 #| output: asis
 print_slide_text(slide_texts$setting_the_context$infrastructure_and_service_delivery)
 ```
-
 
 ## Urban Cover Dynamics
 
@@ -144,39 +151,45 @@ print_slide_text(slide_texts$setting_the_context$infrastructure_and_service_deli
 #| include: false
 # land_cover2011 <- fuzzy_read(spatial_dir, "y2011_NamanganC_LULC.tif", rast)
 # values(land_cover2011)[values(land_cover2011) == 0] <- NA
+land_cover11 <- rast("mnt/2024-country-city/02-process-output/spatial/y2011_NamanganC_LULC.tif")
+values(land_cover11)[values(land_cover11) == 0] <- NA
 # 
 # land_cover2017 <- fuzzy_read(spatial_dir, "y2017_NamanganC_LULC.tif", rast)
 # values(land_cover2017)[values(land_cover2017) == 0] <- NA
+land_cover17 <- rast("mnt/2024-country-city/02-process-output/spatial/y2017_NamanganC_LULC.tif")
+values(land_cover17)[values(land_cover17) == 0] <- NA
 
 #land_cover <- fuzzy_read(spatial_dir, "y2023_NamanganC_LULC.tif", rast)
-land_cover <- rast("mnt/2024-country-city/02-process-output/spatial/y2023_NamanganC_LULC.tif")
-library(raster)
+land_cover23 <- rast("mnt/2024-country-city/02-process-output/spatial/y2023_NamanganC_LULC.tif")
+values(land_cover23)[values(land_cover23) == 0] <- NA
+
+#library(raster)
 #  ext <- extent(c(71.64, 71.66, 41, 41.01))
 # land_cover <- crop(land_cover, ext)
-values(land_cover)[values(land_cover) == 0] <- NA
+ land_cover_rs11 <- land_cover11%>%
+  aggregate(fact = 10, fun = "modal")
+ 
+  land_cover_rs17 <- land_cover17%>%
+  aggregate(fact = 10, fun = "modal")
+  
+   land_cover_rs23 <- land_cover23%>%
+  aggregate(fact = 10, fun = "modal")
 
- land_cover_resample <- land_cover%>%
-   aggregate(fact = 10, fun = "mean" )
-class <- matrix(c(1, 1.9, 1, 1.9, 2.9, 2, 2.9, 3.9, 3,3.9, 4.9, 4, 4.9, 5, 5), ncol =3 , byrow = T)
-land_cover_resample_reclass <- classify(land_cover_resample, class)
+#    landcover <- c(land_cover_rs11, land_cover_rs17, land_cover_rs17)
+# names(landcover) <- c("2011", "2017", "2023")
+
+#class <- matrix(c(1, 1.9, 1, 1.9, 2.9, 2, 2.9, 3.9, 3,3.9, 4.9, 4, 4.9, 5, 5), ncol =3 , byrow = T)
+#land_cover_resample_reclass <- classify(land_cover_resample, class)
 
 # Interactive Plot (Leaflet)
-# add_land_cover_layer <- create_layer_function(data = rast_as_vect(land_cover2011), yaml_key = "land_cover")
-# all_maps <- add_land_cover_layer(all_maps)
-#  added_layers <- c(added_layers, "land-cover11")
-# 
-# add_land_cover_layer <- create_layer_function(data = rast_as_vect(land_cover2017), yaml_key = "land_cover")
-# all_maps <- add_land_cover_layer(all_maps)
-# added_layers <- c(added_layers, "land-cover17")
-
-add_land_cover_layer <- create_layer_function(data =rast_as_vect(land_cover_resample_reclass), yaml_key = "land_cover")
+add_land_cover_layer <- create_layer_function(data =rast_as_vect(land_cover_rs23), yaml_key = "land_cover")
 all_maps <- add_land_cover_layer(all_maps)
 added_layers <- c(added_layers, "land-cover")
 
 # Static plot (PNG)
 #plot_land_cover2011 <- plot_static(data = land_cover2011, yaml_key = "land_cover")
 #plot_land_cover2017 <- plot_static(data = land_cover2017, yaml_key = "land_cover")
-plot_land_cover <- plot_static(data = land_cover, yaml_key = "land_cover")
+plot_land_cover <- plot_static(data = land_cover_rs23, yaml_key = "land_cover")
 #save_plot(plot = plot_land_cover2011, filename = "land_cover2011.png", directory = styled_maps_dir)
 #save_plot(plot = plot_land_cover2017, filename = "land_cover2017.png", directory = styled_maps_dir)
 save_plot(plot = plot_land_cover, filename = "land_cover.png", directory = styled_maps_dir)
@@ -186,6 +199,9 @@ save_plot(plot = plot_land_cover, filename = "land_cover.png", directory = style
 #| include: false
 #install.packages('magick')
 library(magick)
+#install.packages('rsconnect')
+library(rsconnect)
+ 
 #library(png)
 ludonut2011 <- image_read("C:/World_Bank/Neighborhood-Scan-FrontEnd/Images/imagelu11.png")
 ludonut2017 <- image_read("C:/World_Bank/Neighborhood-Scan-FrontEnd/Images/imagelu17.png")
@@ -194,27 +210,68 @@ ludonut2023 <- image_read("C:/World_Bank/Neighborhood-Scan-FrontEnd/Images/image
 land_cover11 <- fuzzy_read(spatial_dir, "y2011_NamanganC_LULC", FUN=rast)
 ```
 
-
 ```{r}
 #| include: false
+#library(reticulate)
 #values(land_cover11)[values(land_cover11) == 0] <- NA
+# 
+# land_cover17 <- fuzzy_read(spatial_dir, "y2017_NamanganC_LULC", FUN=rast)
+# #values(land_cover17)[values(land_cover17) == 0] <- NA
+# 
+# land_cover23 <- fuzzy_read(spatial_dir, "y2023_NamanganC_LULC", FUN=rast)
+# #values(land_cover23)[values(land_cover23) == 0] <- NA
+# 
+# LULC11_17_23 <- fuzzy_read(spatial_dir, "LULC11_17_23", FUN=rast)
+# #values(LULC11_17_23)[values(LULC11_17_23) == 0] <- NA
 
-land_cover17 <- fuzzy_read(spatial_dir, "y2017_NamanganC_LULC", FUN=rast)
-#values(land_cover17)[values(land_cover17) == 0] <- NA
+library(raster)
+library(ggplot2)
+library(reshape2)
+library(leaflet)
 
-land_cover23 <- fuzzy_read(spatial_dir, "y2023_NamanganC_LULC", FUN=rast)
-#values(land_cover23)[values(land_cover23) == 0] <- NA
-
-LULC11_17_23 <- fuzzy_read(spatial_dir, "LULC11_17_23", FUN=rast)
-#values(LULC11_17_23)[values(LULC11_17_23) == 0] <- NA
+# Load raster files
+raster_files <- list.files(path = "path_to_your_raster_files", pattern = ".tif$", full.names = TRUE)
+land_cover11 <- rast("C:/World_Bank/Neighborhood-Scan-FrontEnd/mnt/2024-country-city/02-process-output/spatial/y2011_NamanganC_LULC.tif")
+values(land_cover11)[values(land_cover11) == 0] <- NA
+land_cover17 <- rast("C:/World_Bank/Neighborhood-Scan-FrontEnd/mnt/2024-country-city/02-process-output/spatial/y2017_NamanganC_LULC.tif")
+values(land_cover17)[values(land_cover17) == 0] <- NA
+land_cover23 <- rast("C:/World_Bank/Neighborhood-Scan-FrontEnd/mnt/2024-country-city/02-process-output/spatial/y2023_NamanganC_LULC.tif")
+values(land_cover23)[values(land_cover23) == 0] <- NA
 
 y2017_rasample <-resample(land_cover17, land_cover11)
 y2023_rasample <-resample(land_cover23, land_cover11)
 y2011_resample <-resample(land_cover11, land_cover11)
 
+raster_stack <- c(y2011_resample,y2017_rasample,y2023_rasample)
+names(raster_stack) <- c("2011", "2017", "2023")
+
 LULC <-c(y2011_resample, y2017_rasample, y2023_rasample)
 names(LULC) <- c("2011", "2017", "2023")
+
+raster_agg <- aggregate(raster_stack, fact=5, fun=modal)
+
+# add_land_cover_stack <- create_layer_function(data =rast_as_vect(raster_agg), yaml_key = "land_cover")
+# all_maps <- add_land_cover_stack(all_maps)
+# added_layers <- c(added_layers, "land-cover2023")
 ```
+
+
+
+```{r, warning=FALSE}
+# leaflet() %>%
+#   addTiles() %>%
+#   addRasterImage(raster_agg[[3]], colors = c('#C62421', '#9C9085', '#277242', '#79A54F', '#2491D7'), # colorNumeric("viridis", values(raster_agg[[1]])),
+#                  opacity = 0.5) %>%
+#   addRasterImage(raster_agg[[2]], colors = c('#C62421', '#9C9085', '#277242', '#79A54F', '#2491D7'), # colorNumeric("viridis", values(raster_agg[[1]])),
+#                  opacity = 0.5) %>%
+#   addLayersControl(
+#     baseGroups = names(raster_agg),
+#     options = layersControlOptions(collapsed = FALSE)
+#   )
+
+```
+
+
 
 ```{r}
 #| include: false
@@ -230,7 +287,9 @@ plotly::plot_ly(data=donut2011_f, labels=~Description,
                           textposition = "inside", textinfo = 'percent',
                  marker=list(colors=~Color , line=list(color="black", width=1)))%>%
   add_pie(hole=0.6)%>%
-  layout(title="Percent of Urban Cover 2011")
+  layout(title="Percent of Urban Cover 2011",
+         legend = list(orientation = 'h')
+         )
 
 
 donut_plot2017 <- 
@@ -239,7 +298,8 @@ plotly::plot_ly(data=donut2017_f, labels=~Description,
                           textposition = "inside", textinfo = 'label+percent',
                  marker=list(colors=~Color, line=list(color="black", width=1)))%>%
   add_pie(hole=0.6)%>%
-  layout(title="Percent of Urban Cover 2017")
+  layout(title="Percent of Urban Cover 2017",
+         legend = list(orientation = 'h'))
 
 
 donut_plot2023 <- 
@@ -248,11 +308,14 @@ plotly::plot_ly(data=donut2023_f, labels=~Description,
                           textposition = "inside", textinfo = 'percent',
                  marker=list(colors=~Color, line=list(color="black", width=1)))%>%
   add_pie(hole=0.6)%>%
-  layout(title="Percent of Urban Cover 2023")
+  layout(title="Percent of Urban Cover 2023",
+         legend = list(orientation = 'h'))
 
 ```
 
 ```{r echo=FALSE, warning=FALSE}
+donut_plot2011
+donut_plot2017
 donut_plot2023
 ```
 
@@ -326,7 +389,7 @@ data_long$target <- paste(data_long$target, " ", sep="")
 # From these flows we need to create a node data frame: it lists every entities involved in the flow
 nodes <- data.frame(name=c(as.character(data_long$source), as.character(data_long$target)) %>% unique())
 
-# With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
+# With networkD3, connection must be provided using id, not using real name like in the links dataframe. So we need to reformat it.
 data_long$IDsource=match(data_long$source, nodes$name)-1 
 data_long$IDtarget=match(data_long$target, nodes$name)-1
 
@@ -341,16 +404,27 @@ sankey_plot <- sankeyNetwork(Links = data_long, Nodes = nodes,
 ```
 
 ```{r}
-sankey_plot
+#sankey_plot
+htmlwidgets::onRender(sankey_plot, '
+  function(el) { 
+    var cols_x = this.sankey.nodes().map(d => d.x).filter((v, i, a) => a.indexOf(v) === i).sort(function(a, b){return a - b});
+    var labels = ["2011", "2023"];
+    cols_x.forEach((d, i) => {
+      d3.select(el).select("svg")
+        .append("text")
+        .attr("x", d)
+        .attr("y", 12)
+        .text(labels[i]);
+    })
+  }
+')
 ```
-
 
 ```{r}
 #| output: asis
 print_slide_text(slide_texts$built_form$land_cover)
 
 ```
-
 
 ## Climate Conditions
 
@@ -378,23 +452,36 @@ save_plot(plot = plot_summer_lst, filename = "summer_lst.png", directory = style
 print_slide_text(slide_texts$climate_conditions$summer_lst)
 ```
 
-
-### Land Cover and Temperature
-
 ```{r}
 #| include: false
+### Land Cover and Temperature
 LC_temp <- read.csv("mnt/2024-country-city/02-process-output/spatial/LandCoverTemp.csv")
 library(ggridges)
+y2011 <- LC_temp%>%
+  dplyr::select(Year, Temp, classification)#%>%
+ # filter(Year==2011 & classification==1)
+# LC_glm <-lm(Temp~ UCover, data = y2011)
+# 
+# confint(LC_glm)
+# summary(LC_glm)
+# 
+# 
+# #plot(urban_gam, pages=1)
+# wa_all_1 <- visreg(LC_glm, 
+#                    "UCover",
+#                    xlab="Urban Land Cover",
+#                    ylab="Temperature",
+#                    gg = T)
 
 temp_lc <-ggplot(LC_temp, aes(x = Temp, y = class, fill = factor(Year))) +
     geom_density_ridges_gradient(aes(scale = 1.3, rel_min_height = 0.01))  +
-  stat_density_ridges( quantiles =  0.5)+
+  stat_density_ridges(quantiles =  0.5)+
  scale_fill_manual(name="Year",
                         values = c("2011" = "#e9c46a",
                                "2017" = "#f4a261",
                                "2023" = "#e76f51"))+
 labs(x = "Mean Summer Temperature (°C)", 
-       y = "Urban Land Cover") +
+       y = "", title= "Land Cover and Temperature") +
   theme_classic()+
 theme(axis.text.x = element_text(color = "black", size = 8),
       axis.text.y = element_text(color = "black", size = 12),
@@ -404,7 +491,7 @@ theme(axis.text.x = element_text(color = "black", size = 8),
       axis.title.y = element_text(color = "black", size = 12, face = "bold"))
 ```
 
-```{r warning=FALSE, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 temp_lc
 ```
 
@@ -412,7 +499,6 @@ temp_lc
 #| output: asis
 print_slide_text(slide_texts$climate_conditions$landcover_versus_summer_temperature)
 ```
-
 
 ### Urban Thermal Field Variance Index
 
@@ -441,15 +527,15 @@ UTFVI_freq2023_f <- read_csv("mnt/2024-country-city/02-process-output/spatial/UT
 
 UTFVI_plot2011 <- plot_ly(UTFVI_freq2011_f, labels= ~Description, 
                           values=~percentage, sort=FALSE,
-                          textposition = "inside", textinfo = 'label+percent',
+                          textposition = "inside", textinfo = 'percent',
                  marker=list(colors=c('#5290C2', 'lightblue', '#e9c46a', '#f4a261','#e76f51', '#D33837'), line=list(color="black", width=1)))%>%
   add_pie(hole=0.6)%>%
   layout(title="UTFVI 2011")
 
 UTFVI_plot2017 <- plot_ly(UTFVI_freq2017_f, labels=~Description, 
                           values=~percentage, sort=FALSE,
-                          textposition = "inside", textinfo = 'label+percent',
-                 marker=list(colors=~c('#5290C2', '#F0EE80', '#D33837'), line=list(color="black", width=1)))%>%
+                          textposition = "inside", textinfo = 'percent',
+                 marker=list(colors=~c('#5290C2', 'lightblue', '#e9c46a', '#f4a261','#e76f51', '#D33837'), line=list(color="black", width=1)))%>%
   add_pie(hole=0.6)%>%
   layout(title="UTFVI 2017")
 
@@ -461,14 +547,21 @@ UTFVI_plot2023 <- plot_ly(UTFVI_freq2023_f, labels=~Description,
   layout(title="UTFVI 2023")
 ```
 
-```{r echo=FALSE, warning=FALSE}
-UTFVI_plot2023
-```
-
-
 ```{r}
 #| output: asis
 print_slide_text(slide_texts$climate_conditions$summer_utfvi)
+```
+
+
+```{r echo=FALSE, warning=FALSE}
+UTFVI_plot2011
+UTFVI_plot2017
+UTFVI_plot2023
+```
+
+```{r}
+#| output: asis
+#print_slide_text(slide_texts$climate_conditions$summer_utfvi)
 ```
 
 ### Vegetated Areas
@@ -479,6 +572,7 @@ vegetation <- fuzzy_read(spatial_dir, "ndvi2017", rast)
 
 # Interactive Plot (Leaflet)
 vegetation_poly <- vegetation %>%
+  #aggregate(fact = 5) %>% # Don't have to include it
  # aggregate(fact = 10, fun = "mean") %>%
   as.polygons(digits = 2, aggregate = T) # Is this larger with/without aggregate?
 add_vegetation_layer <- create_layer_function(data = vegetation_poly, yaml_key = "vegetation")
@@ -519,7 +613,6 @@ added_layers <- c(added_layers, "elevation")
 plot_elevation <- plot_static(data = elevation, yaml_key = "elevation", breaks = elev_breaks)
 save_plot(plot = plot_elevation, filename = "elevation.png", directory = styled_maps_dir)
 ```
-
 
 ```{r}
 #| include: false
@@ -579,7 +672,6 @@ Slope_plot <- plot_ly(Slope  , labels= ~Description,
 Slope_plot
 ```
 
-
 ```{r}
 #| output: asis
 print_slide_text(slide_texts$risk_identification$slope)
@@ -593,7 +685,7 @@ moisture <- fuzzy_read(spatial_dir, "ndmi2017", rast)
 
 # Interactive Plot (Leaflet)
 moisture_poly <- moisture %>%
-  aggregate(fact = 5) %>%
+  #aggregate(fact = 5) %>%
   as.polygons(digits =2, aggregate = T) # Is this larger with/without aggregate?
 add_moisture_layer <- create_layer_function(data = moisture_poly, yaml_key = "moisture")
 all_maps <- add_moisture_layer(all_maps)
@@ -608,8 +700,6 @@ save_plot(plot = plot_moisture, filename = "moisture.png", directory = styled_ma
 #| output: asis
 print_slide_text(slide_texts$risk_identification$moisture)
 ```
-
-
 
 ```{r}
 #| output: asis

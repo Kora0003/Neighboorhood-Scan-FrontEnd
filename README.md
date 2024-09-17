@@ -1,4 +1,4 @@
-# Neighborhood Scan Frontend <!-- omit in toc -->
+# City Scan Frontend <!-- omit in toc -->
 
 This directory renders a City Scan as a static site webpage filled with backend-generated source material (to be located in `mnt/`), using [Quarto](https://quarto.org).
 

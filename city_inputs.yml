@@ -1,7 +1,7 @@
 # city basic info
 
 city_name: 'Namangan Center'
-AOI_path: "C:/World_Bank/Neighborhood-Scan-FrontEnd/mnt/2024-country-city/01-user-input/namangan_center.shp"
+AOI_path: 'C:/World_Bank/Neighborhood-Scan-FrontEnd/mnt/2024-country-city/01-user-input/namangan_center.shp'
 #lowest_admin_shp: '/Users/ipshitakarmakar/Dropbox (Personal)/WB/01-current-scans/2024-03-05-armenia-goris/gadm41_ARM_shp/gadm41_ARM_1.shp'
 country_name: 'Uzbekistan'
 country_iso3: 'UZB'
